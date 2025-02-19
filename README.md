@@ -57,7 +57,6 @@ After Docker is installed, at the root level of the repo folder, open your termi
 ### ***To Pull from Git repo***
 ```
 git clone https://github.com/sunnepazzy123/magmaMathTask
-cd microservices-ecommerce
 ```
 
 ### ***To Start all Services***
