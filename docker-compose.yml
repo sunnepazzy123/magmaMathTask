@@ -1,0 +1,92 @@
+version: '3.8'
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+      target: development
+    command: npm run start api-gateway
+    container_name: api-gateway
+    restart: on-failure
+    pull_policy: always # Ensures the latest image is pulled before starting
+    networks:
+      - app-network
+    ports:
+      - '3001:3001'
+    env_file:
+      - ./apps/api-gateway/.env.production
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+      target: development
+    command: npm run start auth
+    container_name: auth
+    restart: on-failure
+    pull_policy: always # Ensures the latest image is pulled before starting
+    networks:
+      - app-network
+    env_file:
+      - ./apps/auth/.env.production
+    depends_on:
+      - mongodb-auth
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  notification:
+    build:
+      context: .
+      dockerfile: ./apps/notification/Dockerfile
+      target: development
+    command: npm run start notification
+    container_name: notification
+    restart: on-failure
+    pull_policy: always # Ensures the latest image is pulled before starting
+    networks:
+      - app-network
+    env_file:
+      - ./apps/auth/.env.production
+    depends_on:
+      - mongodb-auth
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    networks:
+      - app-network
+    ports:
+      - '5672:5672'
+      - '15672:15672'     # For RabbitMQ Management Console
+
+  mongodb-auth:
+    image: mongo
+    container_name: mongodb-auth
+    networks:
+      - app-network
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+    volumes:
+      - mongodb_auth_data:/data/db
+    ports:
+      - '27019:27017'
+
+volumes:
+  mongodb_auth_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
